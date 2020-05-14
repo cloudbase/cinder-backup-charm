@@ -1,0 +1,23 @@
+name: cinder-backup
+summary: "OpenStack cinder backup service for Windows"
+maintainer: Gabriel-Adrian Samfira <gsamfira@cloudbasesolutions.com>
+description: |
+  Cinder is the block storage service for the Openstack project.
+  This subordinate charm configures the Cinder backup service.
+tags:
+  - openstack
+  - storage
+  - windows
+  - samba
+  - microsoft
+  - backup
+series:
+  - win2016
+  - win2019
+subordinate: true
+requires:
+  smb-share:
+    interface: fileserver
+  cinder-backup:
+    interface: cinder-backup
+    scope: container

@@ -1,0 +1,27 @@
+options:
+  backup-backend:
+    type: string
+    default: cinder.backup.drivers.posix.PosixBackupDriver
+    description: |
+      The backup driver to use. Currently only the posix driver is supported.
+      This option is added in the hopes that at a later date, other drivers will
+      be supported, be it by adding the required information in the config, or by
+      creating a relation. If we'll support multiple backends, this option will act
+      as a switch for the desired backend, in case multiple relations are created to
+      multiple backends.
+  backup-posix-path:
+    type: string
+    default: ""
+    description: |
+      This should be the UNC path to a SMB share. If this option is set, it will take
+      precedence over the data received from the fileserver relation (if created).
+      This option exists in order to support external SMB shares that the operator may
+      want to use. It is imperative that any share used here, is hosted on a node
+      connected to the same active directory as the cinder node, and proper permissions
+      are set on the share, such as the cinder user (see ad-user option), has write
+      access.
+  share-name:
+    type: string
+    default: cinder-backup
+    description: |
+      The share name to request on the fileserver relation.
