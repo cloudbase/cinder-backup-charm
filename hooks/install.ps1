@@ -21,7 +21,6 @@ function Enable-CredSSP {
     $isEnabled = Get-Item -Path "WSMan:\localhost\service\auth\credSSP"
     if($isEnabled.Value -eq $false) {
         Set-Item -Path "WSMan:\localhost\service\auth\credSSP" -Value $True | Out-Null
-        Enable-WSManCredSSP -Role "Client" -DelegateComputer * -Force | Out-Null
         Restart-Service winrm
     }
 }

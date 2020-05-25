@@ -59,6 +59,7 @@ function Get-CinderBackupContext {
         "ad_user" = $null;
         "ad_password" = $null;
         "ad_group" = $null;
+        "ad_domain" = $null;
     }
     $ctxt = Get-JujuRelationContext -Relation "cinder-backup" -RequiredContext $requiredCtxt
     if(!$ctxt.Count) {
@@ -163,9 +164,20 @@ function Get-CinderBackupConfigSnippet {
     }
 }
 
+function Enable-ClientCredSSP {
+    $ctxt = Get-CinderBackupContext
+    if ($ctxt.Count -eq 0) {
+        Write-JujuWarning "cinder-backup context not yet ready"
+        return
+    }
+    $domainName = $ctxt["ad_domain"]
+    Enable-WSManCredSSP -Role "Client" -DelegateComputer "*.$domainName" -Force | Out-Null
+}
+
 # HOOK functions
 
 function Invoke-ConfigChangedHook {
+    Enable-ClientCredSSP
     $backupConfig = Get-CinderBackupConfigSnippet
     if (!$backupConfig) {
         Write-JujuWarning "Backup config not yet ready"
