@@ -32,6 +32,7 @@ function Get-SMBShareContext {
     }
     $ctxt = Get-JujuRelationContext -Relation "smb-share" -RequiredContext $requiredCtxt
     if(!$ctxt.Count) {
+        Write-JujuWarning "smb-share context not ready"
         return @{}
     }
     return $ctxt
@@ -204,6 +205,7 @@ function Invoke-SMBShareRelationJoinedHook {
     $marshalledAccounts = Get-MarshaledObject -Object $accounts
     $settings = @{
         "share-name" = $cfgCtx["share_name"]
+        "accounts" = $marshalledAccounts
     }
     $rids = Get-JujuRelationIds -Relation "smb-share"
     foreach ($rid in $rids) {
