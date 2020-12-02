@@ -1057,7 +1057,6 @@ function Start-ProcessAsUser {
         }
 
         $l = $logonTypes[$LogonType]
-
         return [Cloudbase.PSUtils.ProcessManager]::RunProcess(
             $nc.UserName, $nc.Password, $domain, $Command, $Arguments,
             $LoadUserProfile, $l)

@@ -18,6 +18,7 @@ Import-Module JujuHooks
 Import-Module JujuUtils
 Import-Module JujuWindowsUtils
 Import-Module OpenStackCommon
+Import-Module ADCharmUtils
 
 # HELPER functions
 
@@ -89,10 +90,20 @@ function Get-CharmConfigContext {
             $creds = Get-ADCredentialsFromCinderBackupContext $backupCtxt
             # Test that the cinder user has access rights to the configured share.
             # We need to use CredSSP.
-            $canAccess = Invoke-Command -Credential $creds -Authentication Credssp -ComputerName . -ScriptBlock {
-                return (Test-Path $using:backupPosixPath)
-            }
-            if ($canAccess -eq $false) {
+            Grant-PrivilegesOnDomainUser -Username $backupCtxt["ad_user"]
+            $scriptBlock = @"
+                `$ErrorActionPreference = 'Stop'
+                if (Test-Path "$backupPosixPath") {
+                    exit 0
+                }
+                exit 1
+"@
+            $asBase64 = ConvertTo-Base64 $scriptBlock
+            $exitCode = Start-ProcessAsUser -Command "$PShome\powershell.exe" `
+                                            -Arguments @("-EncodedCommand", ("'{0}'" -f $asBase64)) `
+                                            -Credential $creds
+
+            if ($exitCode) {
                 # User explicitly set a backup path, but we were unable to access it.
                 # We only throw an error here when we have the cinder-backup context
                 # because at that point we are sure that this node is already a part
@@ -165,20 +176,9 @@ function Get-CinderBackupConfigSnippet {
     }
 }
 
-function Enable-ClientCredSSP {
-    $ctxt = Get-CinderBackupContext
-    if ($ctxt.Count -eq 0) {
-        Write-JujuWarning "cinder-backup context not yet ready"
-        return
-    }
-    $domainName = $ctxt["ad_domain"]
-    Enable-WSManCredSSP -Role "Client" -DelegateComputer "*.$domainName" -Force | Out-Null
-}
-
 # HOOK functions
 
 function Invoke-ConfigChangedHook {
-    Enable-ClientCredSSP
     $backupConfig = Get-CinderBackupConfigSnippet
     if (!$backupConfig) {
         Write-JujuWarning "Backup config not yet ready"
